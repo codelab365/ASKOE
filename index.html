@@ -1,1 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASKÖ Kinderturnen Kursplan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple transition for smooth accordion opening/closing */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto max-w-4xl p-4">
+        <header class="bg-red-600 text-white p-6 rounded-lg shadow-lg mb-6">
+            <h1 class="text-3xl font-bold">ASKÖ Kinderturnen</h1>
+            <p class="text-xl">Kursplan Herbst/Winter 2025</p>
+        </header>
+
+        <main id="kursplan" class="space-y-3">
+            <!-- Course units will be injected here by JavaScript -->
+        </main>
+
+        <footer class="text-center text-gray-500 mt-8">
+            <p>&copy; 2025 Dein Name</p>
+        </footer>
+    </div>
+
+    <script>
+        const stundenbilder = [
+            {
+                id: 1,
+                date: "17. Sep 2025",
+                title: "Stundenbild 1: Ankommen & Kennenlernen",
+                content: `
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <h4 class="font-bold">Von zu Hause:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Musikanlage / Bluetooth-Box</li>
+                                <li>Luftballons (Gr. 1) / leichte Bälle (Gr. 2)</li>
+                                <li>Optional: Werwolf-Karten (Gr. 2)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Taue, 2 Turnkästen, 2 Langbänke</li>
+                                <li>1 Weichbodenmatte & Turnmatten</li>
+                                <li>Sprossenwand, 2 Paar Ringe, 2 Gitterleitern</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><b>Startritual:</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                        <li><b>Einstiegsphase:</b> Aufwärmen mit Luftballon (Gr. 1) oder Ball (Gr. 2) zur Musik. Übungen: in der Luft halten, balancieren, hochwerfen & fangen.</li>
+                        <li><b>Hauptteil (Gerätepark):</b> Freies Turnen an 5 Stationen: Tauschaukel, Sprungberg (Kasten+Weichboden), Kletterparcours (Sprossenwand+Bank+Kasten), Ringestation, Kletterwand (Gitterleitern). Aufgaben für Gr. 1 (einfach) und Gr. 2 (schwieriger) anpassen.</li>
+                        <li><b>Ausklangsphase:</b> Zuerst "Ballschlange" für alle. Danach Gr. 1 "Packerl machen", Gr. 2 "Pizza backen".</li>
+                        <li><b>Abschlussritual:</b> Winken mit Händen und Füßen.</li>
+                    </ol>
+                `
+            },
+            {
+                id: 2,
+                date: "24. Sep 2025",
+                title: "Stundenbild 2: Ausdauer-Würfelspiel",
+                content: `
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <h4 class="font-bold">Von zu Hause:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Musikanlage / Bluetooth-Box</li>
+                                <li>Bewegungschips</li>
+                                <li>Würfel, laminierte Zahlenzettel, Stifte</li>
+                                <li>4 aufblasbare Bälle</li>
+                                <li>Werwolf-Karten & rote Schleifen (Gr. 2)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>4 Leichtmatten, 3 Langbänke</li>
+                                <li>2 Turnkästen, 1 Weichbodenmatte</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><b>Startritual:</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                        <li><b>Einstiegsphase:</b> Tanzen zu "Tschu-Tschu-Wa" und "Sport" von Mai Cocopelli.</li>
+                        <li><b>Aufwärmen:</b> Spiel mit Bewegungschips. Danach Linien-Workout zur Musik (Laufen, Hampelmann, Sprünge etc.).</li>
+                        <li><b>Hauptteil (Ausdauer-Parcours):</b> In 2-3er Gruppen wird gewürfelt. Ungerade Zahl = um den Parcours laufen. Gerade Zahl = über den Parcours turnen (Rolle, balancieren, springen, Tunnel). Augenzahl wird auf Zettel abgestrichen.</li>
+                        <li><b>Ausklangsphase:</b> Staffellauf mit Bällen. Danach Gr. 1 "Packerl machen", Gr. 2 "Werwölfe" (Abfangspiel).</li>
+                        <li><b>Abschlussritual:</b> Atemübung, dann Winken mit Händen und Füßen.</li>
+                    </ol>
+                `
+            },
+            {
+                id: 3,
+                date: "01. Okt 2025",
+                title: "Stundenbild 3: Großer Gerätepark",
+                content: `
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <h4 class="font-bold">Von zu Hause:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Musikanlage / Bluetooth-Box</li>
+                                <li>Rote Schleifen (für "Versteinern")</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>ca. 27 Turnreifen</li>
+                                <li>Taue, Leichtmatten, Sprossenwand, Rutsche</li>
+                                <li>Gitterleitern, 1 Langbank, 1 Kasten</li>
+                                <li>2 Weichbodenmatten, 1 Trampolin</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><b>Startritual:</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                        <li><b>Einstiegsphase:</b> "Feuer-Wasser-Sturm", danach Körperteil-Begrüßung.</li>
+                        <li><b>Aufwärmen:</b> Reifenparcours in 3 Gruppen mit verschiedenen Bewegungsaufgaben (Slalom, Springen, Balancieren, Seitwärts-Sprünge).</li>
+                        <li><b>Hauptteil (Gerätepark):</b> Freies Turnen an 6 Stationen: Taue, Rutsche, Gitterleitern, Sprungstation (Kasten+Weichboden), Trampolin, Reifen-Zone. Eltern helfen bei den Jüngeren.</li>
+                        <li><b>Ausklangsphase:</b> Lustige Laufspiele: "Wer fürchtet sich vor dem weißen Hai?", "Versteinern", "Der Hase läuft über das Feld".</li>
+                        <li><b>Abschlussritual:</b> "Tunnel" (Kinder laufen durch ein Händedach), danach Winken.</li>
+                    </ol>
+                `
+            },
+            {
+                id: 4,
+                date: "08. Okt 2025",
+                title: "Stundenbild 4: Fangen und Werfen",
+                content: `
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <h4 class="font-bold">Von zu Hause:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Musikanlage / Bluetooth-Box</li>
+                                <li>ca. 20 aufblasbare Bälle</li>
+                                <li>Rote Turnschleifen (Gr. 2)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                            <ul class="list-disc list-inside">
+                                <li>2-3 Turnreifen (Einstieg)</li>
+                                <li>8 Langbänke, Gitterleiter, Turnringe</li>
+                                <li>Zusätzliche Reifen (Hauptteil), 2 Weichbodenmatten</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><b>Startritual:</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                        <li><b>Einstiegsphase:</b> "Der fliegende Reifen" im Kreis, danach "Feuer-Wasser-Sturm".</li>
+                        <li><b>Aufwärmen:</b> Umfangreiche Ballgewöhnung (um Körper kreisen, drüber springen), dann Parcours mit 8 Langbänken (werfen, fangen, dribbeln), danach Übungen an der Wand (werfen, klatschen, drehen).</li>
+                        <li><b>Hauptteil (Partner- & Gruppenspiele):</b> Partnerübungen (zurollen, zuwerfen), Zielwerfen (Gitterleiter, Reifen), Gruppenspiele. Gr. 1: "Heiße Kartoffel". Gr. 2: "Merkball" & "Wandball".</li>
+                        <li><b>Ausklangsphase:</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
+                        <li><b>Abschlussritual:</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
+                    </ol>
+                `
+            },
+            { id: 5, date: "15. Okt 2025", title: "Einheit 5", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 6, date: "22. Okt 2025", title: "Sonderthema: Halloween-Turnstunde", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 'pause', date: "29. Okt 2025", title: "Herbstferien - Kein Turnen", content: '' },
+            { id: 7, date: "05. Nov 2025", title: "Einheit 7", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 8, date: "12. Nov 2025", title: "Einheit 8", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 9, date: "19. Nov 2025", title: "Einheit 9", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 10, date: "26. Nov 2025", title: "Einheit 10", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 11, date: "03. Dez 2025", title: "Einheit 11", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` },
+            { id: 12, date: "10. Dez 2025", title: "Sonderthema: Weihnachtsturnstunde", content: `<p>Dieses Stundenbild ist noch nicht geplant.</p>` }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const kursplanContainer = document.getElementById('kursplan');
+            let activeAccordion = null;
+
+            stundenbilder.forEach(stunde => {
+                const isPause = stunde.id === 'pause';
+                const isSpecial = stunde.title.toLowerCase().includes('sonderthema') || isPause;
+
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+                
+                if (isPause) {
+                    accordionItem.innerHTML = `
+                        <div class="w-full text-left p-4 bg-yellow-200 text-yellow-800 font-semibold">
+                            <span>${stunde.date}</span> - <span>${stunde.title}</span>
+                        </div>
+                    `;
+                } else {
+                    accordionItem.innerHTML = `
+                        <button class="w-full text-left p-4 flex justify-between items-center hover:bg-gray-50 focus:outline-none">
+                            <div>
+                                <span class="font-semibold text-gray-500">${stunde.date}</span>
+                                <h2 class="text-lg font-bold ${isSpecial ? 'text-red-600' : 'text-gray-800'}">${stunde.title}</h2>
+                            </div>
+                            <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-4 border-t border-gray-200">
+                                ${stunde.content}
+                            </div>
+                        </div>
+                    `;
+                    
+                    const button = accordionItem.querySelector('button');
+                    const content = accordionItem.querySelector('.accordion-content');
+                    const icon = accordionItem.querySelector('svg');
+
+                    button.addEventListener('click', () => {
+                        // Close previously active accordion
+                        if (activeAccordion && activeAccordion !== content) {
+                            activeAccordion.style.maxHeight = 0;
+                            activeAccordion.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
+                        }
+
+                        // Toggle current accordion
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = null;
+                            icon.classList.remove('rotate-180');
+                            activeAccordion = null;
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                            icon.classList.add('rotate-180');
+                            activeAccordion = content;
+                        }
+                    });
+                }
+                kursplanContainer.appendChild(accordionItem);
+            });
+        });
+    </script>
+
+</body>
+</html>
 
