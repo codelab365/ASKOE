@@ -10,6 +10,23 @@
         #mobile-menu {
             transition: transform 0.3s ease-in-out;
         }
+        /* Styles für den Druck */
+        @media print {
+            body > *:not(.print-content) {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                margin: 0;
+            }
+            .print-content {
+                display: block !important;
+                width: 100%;
+                margin: 0;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -29,18 +46,23 @@
     </div>
     <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
 
-    <div class="container mx-auto max-w-4xl p-4">
+    <div class="container mx-auto max-w-4xl p-4 print-content">
         <header class="bg-red-600 text-white p-4 rounded-lg shadow-lg mb-6 flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold">ASKÖ Kinderturnen</h1>
                 <p id="current-lesson-title" class="text-lg">Kursplan Herbst/Winter 2025</p>
             </div>
-            <button id="menu-toggle" class="p-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
+            <div class="flex items-center space-x-2">
+                <button id="print-button" class="p-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-white">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6c-1.1 0-2 .9-2 2v2h16V3c0-1.1-.9-2-2-2zM4 17h16v-6H4v6zm13-8h2v2h-2z"/></svg>
+                </button>
+                <button id="menu-toggle" class="p-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
         </header>
 
-        <main class="bg-white rounded-lg shadow-md p-5">
+        <main class="bg-white rounded-lg shadow-md p-5 print-content">
             <div id="tabs-content">
                 <!-- Der Stundenplan-Inhalt wird hier eingefügt -->
             </div>
@@ -89,6 +111,7 @@
         const currentLessonTitle = document.getElementById('current-lesson-title');
         const userIdDisplay = document.getElementById('user-id-display');
         const loadingSpinner = document.getElementById('loading-spinner');
+        const printButton = document.getElementById('print-button');
 
         let userId = null;
         let stundenbilder = [];
@@ -332,7 +355,15 @@
                         <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
                         <li><b>Einstiegsphase (ca. 5 Min):</b> Wir begrüßen uns wie bei Einheit 1.</li>
                         <li><b>Aufwärmphase (ca. 10-15 Min):</b> 5 Minuten Aufwärmen mit mir, alle Gliedmaßen dehnen (wie in der Kletterhalle). Danach Aufwärmen mit dem Ball.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Partnerübungen, Zielwerfen, Gruppenspiele. Gr. 1: "Heiße Kartoffel". Gr. 2: "Merkball" & "Wandball".</li>
+                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                            <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                <li><b>"Ball-Fisch-Fangen":</b> Ein Fang-Spiel, bei dem Kinder, die vom Ball getroffen werden, breitbeinig stehen bleiben, bis sie befreit werden.</li>
+                                <li><b>"Hütchen-Zielwerfen":</b> Aufgestellte Hütchen mit weichen Bällen abwerfen.</li>
+                                <li><b>"Eltern-Kind-Rollball":</b> Die Kinder rollen sich im Sitzen den Ball zu, um die Hand-Auge-Koordination zu fördern.</li>
+                                <li><b>"Ball-Klettern":</b> Über eine Langbank klettern, ohne die darauf liegenden Bälle herunterzuwerfen.</li>
+                                <li><b>"Der fliegende Ball":</b> Ball hochwerfen, fangen und dabei eine kleine Übung machen.</li>
+                            </ul>
+                        </li>
                         <li><b>Ausklangsphase (ca. 10 Min):</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
                         <li><b>Schlussritual (ca. 3 Min):</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
                     </ul>
@@ -344,7 +375,15 @@
                         <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
                         <li><b>Einstiegsphase (ca. 5 Min):</b> Wir begrüßen uns wie bei Einheit 1.</li>
                         <li><b>Aufwärmphase (ca. 10-15 Min):</b> 5 Minuten Aufwärmen mit mir, alle Gliedmaßen dehnen (wie in der Kletterhalle). Danach Aufwärmen mit dem Ball.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Partnerübungen, Zielwerfen, Gruppenspiele. Gr. 1: "Heiße Kartoffel". Gr. 2: "Merkball" & "Wandball".</li>
+                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                            <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                <li><b>"Mannschafts-Wandball":</b> Teams werfen den Ball an eine Wand, der von einem Teamkollegen gefangen werden muss.</li>
+                                <li><b>"Dribbel-Parcours":</b> Parcours mit Langbänken, den die Kinder dribbelnd durchlaufen müssen.</li>
+                                <li><b>"Merkball":</b> Im Kreis stehen und sich den Ball zuwerfen, dabei den Namen des Empfängers rufen.</li>
+                                <li><b>"Ball-Völkerball":</b> Eine vereinfachte Version von Völkerball.</li>
+                                <li><b>"Staffellauf mit Zielwerfen":</b> Staffellauf, bei dem am Ende eines jeden Durchgangs ein Ball in einen Kasten geworfen werden muss.</li>
+                            </ul>
+                        </li>
                         <li><b>Ausklangsphase (ca. 10 Min):</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
                         <li><b>Schlussritual (ca. 3 Min):</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
                     </ul>
@@ -529,6 +568,11 @@
 
         menuToggle.addEventListener('click', toggleMenu);
         menuOverlay.addEventListener('click', toggleMenu);
+
+        // Druckfunktion
+        printButton.addEventListener('click', () => {
+            window.print();
+        });
     </script>
 </body>
 </html>
