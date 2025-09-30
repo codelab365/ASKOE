@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASKÖ Kinderturnen Kursplan - V6 mit Datenbank</title>
+    <title>ASKÖ Kinderturnen Kursplan - Offline Version</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Eigene Styles für den Menü-Übergang */
@@ -39,10 +39,6 @@
         <nav id="menu-nav" class="p-2 space-y-1">
             <!-- Menüpunkte werden hier eingefügt -->
         </nav>
-        <div class="p-4 text-xs text-gray-500">
-            <p>Deine Benutzer-ID für die Zusammenarbeit:</p>
-            <span id="user-id-display" class="font-mono text-gray-700 select-all break-all"></span>
-        </div>
     </div>
     <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
 
@@ -66,10 +62,6 @@
             <div id="tabs-content">
                 <!-- Der Stundenplan-Inhalt wird hier eingefügt -->
             </div>
-            <div id="loading-spinner" class="text-center py-8 hidden">
-                <div class="w-12 h-12 border-4 border-red-400 border-t-red-600 rounded-full animate-spin mx-auto"></div>
-                <p class="mt-2 text-gray-500">Lade Stundenbilder...</p>
-            </div>
         </main>
 
         <footer class="text-center text-gray-500 mt-8">
@@ -77,633 +69,551 @@
         </footer>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // UI-Elemente
+            const menuNav = document.getElementById('menu-nav');
+            const tabsContent = document.getElementById('tabs-content');
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuOverlay = document.getElementById('menu-overlay');
+            const currentLessonTitle = document.getElementById('current-lesson-title');
+            const printButton = document.getElementById('print-button');
 
-        // Globale Variablen aus der Umgebung
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        // Deine neue Firebase-Konfiguration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDUvenlcCEjnBUlG7iYvemZMjZqvT0_GHs",
-            authDomain: "askoe-360c8.firebaseapp.com",
-            projectId: "askoe-360c8",
-            storageBucket: "askoe-360c8.firebasestorage.app",
-            messagingSenderId: "343530022590",
-            appId: "1:343530022590:web:aa9bbf8005f490e44960ef",
-            measurementId: "G-SZJ9R2JFB8"
-        };
+            let activeStundeId = null;
 
-        // Initialisiere Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        
-        // UI-Elemente
-        const menuNav = document.getElementById('menu-nav');
-        const tabsContent = document.getElementById('tabs-content');
-        const menuToggle = document.getElementById('menu-toggle');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const menuOverlay = document.getElementById('menu-overlay');
-        const currentLessonTitle = document.getElementById('current-lesson-title');
-        const userIdDisplay = document.getElementById('user-id-display');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const printButton = document.getElementById('print-button');
+            // Vordefinierte Stundenbilder sind jetzt direkt hier
+            const stundenbilder = [
+                { id: 1, date: "17. Sep 2025", shortTitle: "Einheit 1", title: "Stundenbild 1: Ankommen & Kennenlernen", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div><h4 class="font-bold">Von zu Hause:</h4><ul class="list-disc list-inside"><li>Musikanlage / Bluetooth-Box</li><li>Luftballons (Gr. 1) / leichte Bälle (Gr. 2)</li><li>Optional: Werwolf-Karten (Gr. 2)</li></ul></div>
+                    <div><h4 class="font-bold">Aus dem Turnsaal:</h4><ul class="list-disc list-inside"><li>Taue, 2 Turnkästen, 2 Langbänke</li><li>1 Weichbodenmatte & Turnmatten</li><li>Sprossenwand, 2 Paar Ringe, 2 Gitterleitern</li></ul></div>
+                </div>
+                <hr class="my-4">
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                <div class="space-y-6">
+                    <!-- Hopsi Hopper -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo und spielen Feuer-Wasser-Sturm.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen an 5 Stationen: Tauschaukel, Sprungberg (Kasten+Weichboden), Kletterparcours (Sprossenwand+Bank+Kasten), Ringestation, Kletterwand (Gitterleitern).</li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Wir spielen "Wer fürchtet sich vor dem weißen Hai?". Danach "Packerl machen" und "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Winken mit Händen und Füßen.</li>
+                        </ul>
+                    </div>
+                    <!-- KOORDI -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po. Wir spielen Feuer-Wasser-Sturm.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen an 5 Stationen: Tauschaukel, Sprungberg (Kasten+Weichboden), Kletterparcours (Sprossenwand+Bank+Kasten), Ringestation, Kletterwand (Gitterleitern).</li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Wir spielen "Die Chinesische Mauer" und danach "Der Hase läuft über das Feld". Zum Abschluss "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> "Winken mit Händen und Füßen", danach kurzer Austausch.</li>
+                        </ul>
+                    </div>
+                </div>` },
+                { id: 2, date: "24. Sep 2025", shortTitle: "Einheit 2", title: "Stundenbild 2: Ausdauer-Würfelspiel", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-bold">Von zu Hause:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>5 aufblasbare Bälle</li>
+                            <li>Würfel, Stifte</li>
+                            <li>Markierhütchen um den inneren Kreis zu markieren</li>
+                            <li>Bewegungschips</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>2x Kasten</li>
+                            <li>4x Langbank</li>
+                            <li>Weichboden</li>
+                            <li>4x Turnmatten</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-bold text-gray-800">Parcours-Aufbau</h4>
+                    <p class="mt-2">Der Parcours besteht aus folgenden Elementen, die in der Halle aufgebaut werden:</p>
+                    <ul class="list-disc list-inside mt-2">
+                        <li>Über eine Langbank auf den Kasten 1</li>
+                        <li>Über eine zweite Langbank (als Brücke) zum Kasten 2</li>
+                        <li>Sprung auf den Weichboden</li>
+                        <li>Über eine gedrehte Langbank weiter</li>
+                        <li>Eine Rolle vorwärts auf zwei Turnmatten</li>
+                        <li>Durch drei Reifen zurück hüpfen</li>
+                    </ul>
+                </div>
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                <div class="space-y-6">
+                    <!-- Hopsi Hopper -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo und spielen Feuer-Wasser-Sturm.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Die Kinder werden in 2er- oder 3er-Gruppen eingeteilt. Jede Gruppe würfelt. Bei einer ungeraden Zahl läuft die Gruppe um die Markierhütchen. Bei einer geraden Zahl durchläuft die Gruppe den Parcours. Die Eltern unterstützen beim Ausstreichen der Zahlen auf dem Zahlenblatt. Die schnellste Gruppe, die alle Zahlen ausgestrichen hat, gewinnt.</li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Staffellauf mit Bällen. Optional: "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Atemübung, dann Winken mit Händen und Füßen.</li>
+                        </ul>
+                    </div>
+                    <!-- KOORDI -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo und spielen Feuer-Wasser-Sturm.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Die Kinder werden in 2er- oder 3er-Gruppen eingeteilt. Jede Gruppe würfelt. Bei einer ungeraden Zahl läuft die Gruppe um die Markierhütchen. Bei einer geraden Zahl durchläuft die Gruppe den Parcours. Die schnellste Gruppe, die alle Zahlen ausgestrichen hat, gewinnt.</li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Staffellauf mit Bällen. Optional: "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Atemübung, dann Winken mit Händen und Füßen.</li>
+                        </ul>
+                    </div>
+                </div>` },
+                { id: 3, date: "01. Okt 2025", shortTitle: "Einheit 3", title: "Stundenbild 3: Großer Gerätepark", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-bold">Von zu Hause:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>Musikanlage / Bluetooth-Box</li>
+                            <li>Rote Schleifen (für "Versteinern")</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>20 Turnreifen</li>
+                            <li>Taue, Leichtmatten, Sprossenwand, Rutsche</li>
+                            <li>Gitterleitern, 1 Langbank, 1 Kasten</li>
+                            <li>2 Weichbodenmatten, 1 Trampolin</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-bold text-gray-800">Parcours-Aufbau Stationsbetrieb</h4>
+                    <p class="mt-2">Die Stationen werden vor der Stunde aufgebaut:</p>
+                    <ul class="list-decimal list-inside mt-2 space-y-2">
+                        <li><b>Station 1: Taue mit 4 Langbänken</b>
+                            <ul class="list-[circle] list-inside ml-4">
+                                <li>Wir schwingen von einer Seite auf die andere.</li>
+                            </ul>
+                        </li>
+                        <li><b>Station 2: Turnringe</b>
+                            <ul class="list-[circle] list-inside ml-4">
+                                <li><b>HOPSI:</b> Schwingen, Stützen, Reinsetzen und schaukeln.</li>
+                                <li><b>KOORDI:</b> In den Stütz und halten, Fenstersturz mit Unterstützung, in die Ringe und schaukeln.</li>
+                            </ul>
+                        </li>
+                        <li><b>Station 3: Trampolin und Weichboden</b>
+                            <ul class="list-[circle] list-inside ml-4">
+                                <li>Freie Sprünge auf dem Trampolin mit Landung auf dem Weichboden.</li>
+                            </ul>
+                        </li>
+                        <li><b>Station 4: Rutsche an der Sprossenwand</b>
+                            <ul class="list-[circle] list-inside ml-4">
+                                <li>Die Rutsche wird mit Turnmatten gesichert.</li>
+                            </ul>
+                        </li>
+                        <li><b>Station 5: Rack mit 2 Langbänken</b>
+                            <ul class="list-[circle] list-inside ml-4">
+                                <li><b>HOPSI:</b> Klettern und drüber springen.</li>
+                                <li><b>KOORDI:</b> In den Stütz springen, Aufschwung üben.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                <div class="space-y-6">
+                    <!-- Hopsi Hopper -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> "Feuer-Wasser-Sturm", danach Körperteil-Begrüßung.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir stellen uns in 3 Gruppen auf, jede Gruppe hat einen Reifen vor sich liegen. Wir absolvieren folgende Übungen:
+                                <ul class="list-[circle] list-inside mt-2">
+                                    <li>Wir gehen über die Reifen</li>
+                                    <li>Wir laufen über die Reifen</li>
+                                    <li>Wir gehen rückwärts über die Reifen</li>
+                                    <li>Wir laufen rückwärts über die Reifen</li>
+                                    <li>Wir springen mit beiden Beinen in jeden Reifen vorwärts</li>
+                                    <li>Wir balancieren über die Reifen</li>
+                                    <li>Wir springen in den Reifen und klatschen dabei</li>
+                                    <li>Wir gehen durch den Riefen, dabei wird der ganze Körper durch den Reifen geschoben</li>
+                                </ul>
+                            </li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen am Stationsbetrieb. Die Eltern unterstützen bei den Stationen.</li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b>
+                                <ul class="list-[circle] list-inside mt-2">
+                                    <li>Liegestützübungen</li>
+                                    <li>Handstandübungen an der Wand</li>
+                                    <li>Scheibtruhe fahren (paarweise)</li>
+                                </ul>
+                            </li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> "Tunnel", danach Winken.</li>
+                        </ul>
+                    </div>
+                    <!-- KOORDI -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> "Feuer-Wasser-Sturm", danach Körperteil-Begrüßung.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir stellen uns in 3 Gruppen auf, jede Gruppe hat einen Reifen vor sich liegen. Wir absolvieren folgende Übungen:
+                                <ul class="list-[circle] list-inside mt-2">
+                                    <li>Wir gehen über die Reifen</li>
+                                    <li>Wir laufen über die Reifen</li>
+                                    <li>Wir gehen rückwärts über die Reifen</li>
+                                    <li>Wir laufen rückwärts über die Reifen</li>
+                                    <li>Wir springen mit beiden Beinen in jeden Reifen vorwärts</li>
+                                    <li>Wir balancieren über die Reifen</li>
+                                    <li>Wir springen in den Reifen und klatschen dabei</li>
+                                    <li>Wir gehen durch den Riefen, dabei wird der ganze Körper durch den Reifen geschoben</li>
+                                </ul>
+                            </li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen am Stationsbetrieb.</li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b>
+                                <ul class="list-[circle] list-inside mt-2">
+                                    <li>Liegestützübungen</li>
+                                    <li>Handstandübungen an der Wand</li>
+                                    <li>Scheibtruhe fahren (paarweise)</li>
+                                </ul>
+                            </li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> "Tunnel", danach Winken.</li>
+                        </ul>
+                    </div>
+                </div>` },
+                { id: 4, date: "08. Okt 2025", shortTitle: "Einheit 4", title: "Stundenbild 4: Fangen und Werfen", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-bold">Von zu Hause:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>Aufblasbare Bälle</li>
+                            <li>Markierungshütchen</li>
+                            <li>Schleifen</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>6x Langbänke</li>
+                            <li>1x Kasten (für das Zielwerfen)</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                <div class="space-y-6">
+                    <!-- Hopsi Hopper -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Wir begrüßen uns wie bei Einheit 1.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> 5 Minuten Aufwärmen mit mir, alle Gliedmaßen dehnen (wie in der Kletterhalle). Danach Aufwärmen mit dem Ball.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                                <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                    <li><b>"Ball-Fisch-Fangen":</b> Ein Fang-Spiel, bei dem Kinder, die vom Ball getroffen werden, breitbeinig stehen bleiben, bis sie befreit werden.</li>
+                                    <li><b>"Hütchen-Zielwerfen":</b> Aufgestellte Hütchen mit weichen Bällen abwerfen.</li>
+                                    <li><b>"Eltern-Kind-Rollball":</b> Die Kinder rollen sich im Sitzen den Ball zu, um die Hand-Auge-Koordination zu fördern.</li>
+                                    <li><b>"Ball-Klettern":</b> Über eine Langbank klettern, ohne die darauf liegenden Bälle herunterzuwerfen.</li>
+                                    <li><b>"Der fliegende Ball":</b> Ball hochwerfen, fangen und dabei eine kleine Übung machen.</li>
+                                </ul>
+                            </li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
+                        </ul>
+                    </div>
+                    <!-- KOORDI -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Wir begrüßen uns wie bei Einheit 1.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> 5 Minuten Aufwärmen mit mir, alle Gliedmaßen dehnen (wie in der Kletterhalle). Danach Aufwärmen mit dem Ball.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                                <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                    <li><b>"Mannschafts-Wandball":</b> Teams werfen den Ball an eine Wand, der von einem Teamkollegen gefangen werden muss.</li>
+                                    <li><b>"Dribbel-Parcours":</b> Parcours mit Langbänken, den die Kinder dribbelnd durchlaufen müssen.</li>
+                                    <li><b>"Merkball":</b> Im Kreis stehen und sich den Ball zuwerfen, dabei den Namen des Empfängers rufen.</li>
+                                    <li><b>"Ball-Völkerball":</b> Eine vereinfachte Version von Völkerball.</li>
+                                    <li><b>"Staffellauf mit Zielwerfen":</b> Staffellauf, bei dem am Ende eines jeden Durchgangs ein Ball in einen Kasten geworfen werden muss.</li>
+                                </ul>
+                            </li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
+                        </ul>
+                    </div>
+                </div>` },
+                { id: 5, date: "15. Okt 2025", shortTitle: "Einheit 5", title: "Einheit 5", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-bold">Von zu Hause:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>Musikanlage / Bluetooth-Box</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>Langbänke, Turnmatten, Sprossenwand, Kasten</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                <div class="space-y-6">
+                    <!-- Hopsi Hopper -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Die Kinder laufen zur Musik. Bei einer gerufenen Zahl zwischen 2 und 6 bilden die Kinder eine Gruppe. Übrig gebliebene Kinder machen mit dem Trainer eine Gruppe und absolvieren folgende Übungen:
+                                <ul class="list-[circle] list-inside mt-2">
+                                    <li>Hampelmann</li>
+                                    <li>Sprung und im Sprung</li>
+                                    <li>Ein Kind liegt am Boden und die Anderen springen vorsichtig über das Kind</li>
+                                </ul>
+                            </li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir wärmen uns wie in der Kletterhalle auf und spielen Versteinern.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                                <p class="mt-2">Es geht um Ausdauertraining.</p>
+                                <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                    <li><b>Langbänke:</b> Über die Langbank gehen (ein Fuß muss darauf), unter der Langbank durchkriechen, rückwärts laufen und über die Langbank springen.</li>
+                                    <li><b>Langbänke (umgebaut):</b> Die Kinder legen sich mit dem Bauch auf die Langbank und ziehen sich rüber.</li>
+                                    <li><b>Sprossenwand:</b> Klettern von einem Ende zum anderen. Knien und mit den Füßen auf die Sprossenwand klettern. Mit dem Rücken vor die Sprossenwand legen und Sprosse für Sprosse hochklettern.</li>
+                                    <li><b>Wand:</b> Auf Turnmatten knien und mit beiden Füßen kurz gegen die Wand springen. Danach versuchen, immer mehr einen Handstand zu schaffen.</li>
+                                    <li><b>Ausdauer-Staffel:</b> In drei Gruppen vor der Wand laufen und eine Übung machen (Wand mit Po berühren, hochspringen und Wand berühren, gegen die Wand knien und springen).</li>
+                                </ul>
+                            </li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Drei Gruppen auf Langbänken. Der Trainer ruft Zahlen auf, und die entsprechenden Kinder führen die Übungen aus: Aufstehen, um die Langbank laufen, Platz wechseln. Wir spielen "Der Hase läuft über das Feld". Danach "Packerl machen" und "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Wie in Einheit 1.</li>
+                        </ul>
+                    </div>
+                    <!-- KOORDI -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> Die Kinder laufen zur Musik. Bei einer gerufenen Zahl zwischen 2 und 6 bilden die Kinder eine Gruppe. Übrig gebliebene Kinder machen mit dem Trainer eine Gruppe und absolvieren folgende Übungen:
+                                <ul class="list-[circle] list-inside mt-2">
+                                    <li>Hampelmann</li>
+                                    <li>Sprung und im Sprung</li>
+                                    <li>Ein Kind liegt am Boden und die Anderen springen vorsichtig über das Kind</li>
+                                </ul>
+                            </li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir wärmen uns wie in der Kletterhalle auf und spielen Versteinern.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                                <p class="mt-2">Es geht um Ausdauertraining.</p>
+                                <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                    <li><b>Langbänke:</b> Über die Langbank gehen (ein Fuß muss darauf), unter der Langbank durchkriechen, rückwärts laufen und über die Langbank springen.</li>
+                                    <li><b>Langbänke (umgebaut):</b> Die Kinder legen sich mit dem Bauch auf die Langbank und ziehen sich rüber.</li>
+                                    <li><b>Sprossenwand:</b> Klettern von einem Ende zum anderen. Knien und mit den Füßen auf die Sprossenwand klettern. Mit dem Rücken vor die Sprossenwand legen und Sprosse für Sprosse hochklettern.</li>
+                                    <li><b>Wand:</b> Auf Turnmatten knien und mit beiden Füßen kurz gegen die Wand springen. Danach versuchen, immer mehr einen Handstand zu schaffen.</li>
+                                    <li><b>Ausdauer-Staffel:</b> In drei Gruppen vor der Wand laufen und eine Übung machen (Wand mit Po berühren, hochspringen und Wand berühren, gegen die Wand knien und springen).</li>
+                                </ul>
+                            </li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> Drei Gruppen auf Langbänken. Der Trainer ruft Zahlen auf, und die entsprechenden Kinder führen die Übungen aus: Aufstehen, um die Langbank laufen, Platz wechseln. Danach "Pizza backen" und "Werwolf".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Wie in Einheit 1.</li>
+                        </ul>
+                    </div>
+                </div>` },
+                { id: 6, date: "22. Okt 2025", shortTitle: "Halloween", title: "Sonderthema: Halloween-Turnstunde", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-bold">Von zu Hause:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>Musik passend zum Thema</li>
+                            <li>Dekoration (Spinnen, Fledermäuse, etc.)</li>
+                            <li>Leichte Stofftücher (für Geisterspiele)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Aus dem Turnsaal:</h4>
+                        <ul class="list-disc list-inside">
+                            <li>Kleine Bälle (als "Augäpfel")</li>
+                            <li>Fallschirm</li>
+                            <li>Reifen und Hütchen (für Parcours)</li>
+                            <li>Turnmatten</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
+                <div class="space-y-6">
+                    <!-- Hopsi Hopper -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> Die Kinder sitzen im "Hexenkessel" (Kreis) und begrüßen sich mit einem gruseligen "Huhuuu"-Flüstern. Es wird kurz über die Kostüme gesprochen.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> "Spinnweben-Lauf" durch einen Parcours aus Seilen, die nicht berührt werden dürfen. Wer berührt, muss laut "Buhh!" rufen.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> "Monster-Gang": Jeder bewegt sich wie ein Monster oder Geist zu gruseliger Musik. Danach ein "Zombie-Lauf" durch die Halle.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                                <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                    <li><b>"Kürbis-Jagd":</b> Ein Fangspiel, bei dem der Fänger einen orangefarbenen Ball (Kürbis) in den Händen hält.</li>
+                                    <li><b>"Gespenster-Tuch-Flug":</b> Kleine Stofftücher (Geister) werden hoch in die Luft geworfen und müssen gefangen werden, bevor sie zu Boden fallen.</li>
+                                    <li><b>"Monster-Parcours":</b> Ein Parcours aus Matten und Kästen, der nur auf allen Vieren (wie ein Monster) oder rückwärts durchlaufen werden darf.</li>
+                                </ul>
+                            </li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> "Fliegende Geister": Die Kinder sitzen im Kreis und werfen gemeinsam ein großes Tuch (Fallschirm) in die Luft. Danach "Pizza backen".</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Jeder verabschiedet sich mit einem "Gruselgeräusch".</li>
+                        </ul>
+                    </div>
+                    <!-- KOORDI -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
+                        <ul class="list-decimal list-inside space-y-2 mt-2">
+                            <li><b>Start Ritual (ca. 3 Min):</b> Alle sitzen im "Hexenkessel" (Kreis) und begrüßen sich mit einem unheimlichen "Huhuuu". Danach kurze Besprechung der "gruseligen" Regeln.</li>
+                            <li><b>Einstiegsphase (ca. 5 Min):</b> "Spinnennetz-Wettlauf": Zwei Teams rennen gegeneinander durch einen Parcours aus Seilen. Berühren sie ein Seil, müssen sie sich einmal um die eigene Achse drehen.</li>
+                            <li><b>Aufwärmphase (ca. 10-15 Min):</b> "Monster-Gang": Jeder bewegt sich wie ein gruseliges Wesen zu lauter Musik. Danach ein "Zombie-Lauf" mit ausgestreckten Armen, um die Koordination zu trainieren.</li>
+                            <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
+                                <ul class="list-[circle] list-inside mt-2 space-y-2">
+                                    <li><b>"Augen-Wurf":</b> Die Kinder versuchen, kleine Bälle ("Augäpfel") in einen weit entfernten Kasten zu werfen.</li>
+                                    <li><b>"Skelett-Bausteine":</b> In Gruppen versuchen die Kinder, aus Turnmatten und Kisten ein "Skelett" (eine menschliche Form) nachzubilden.</li>
+                                    <li><b>"Gespenster-Jagd":</b> Ein Kind ist das "Gespenst" und fängt die anderen. Die gefangenen Kinder sind "versteinerte Geister" und müssen stillstehen. Sie können befreit werden, indem sie ein anderes Kind berührt.</li>
+                                </ul>
+                            </li>
+                            <li><b>Ausklangsphase (ca. 10 Min):</b> "Geister-Flug": Alle Kinder sitzen am Boden und halten einen Fallschirm. Sie lassen ihn gemeinsam auf- und abfliegen, um die Stunde langsam ausklingen zu lassen.</li>
+                            <li><b>Schlussritual (ca. 3 Min):</b> Jedes Kind verabschiedet sich mit einem "Gruselgeräusch" von den anderen.</li>
+                        </ul>
+                    </div>
+                </div>` },
+                { id: 7, date: "05. Nov 2025", shortTitle: "Einheit 7", title: "Einheit 7", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>` },
+                { id: 8, date: "12. Nov 2025", shortTitle: "Einheit 8", title: "Einheit 8", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>` },
+                { id: 9, date: "19. Nov 2025", shortTitle: "Einheit 9", title: "Einheit 9", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>` },
+                { id: 10, date: "26. Nov 2025", shortTitle: "Einheit 10", title: "Einheit 10", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>` },
+                { id: 11, date: "03. Dez 2025", shortTitle: "Einheit 11", title: "Einheit 11", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>` },
+                { id: 12, date: "10. Dez 2025", shortTitle: "Einheit 12", title: "Einheit 12", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>` },
+            ];
 
-        let userId = null;
-        let stundenbilder = [];
-        let activeStundeId = null;
-
-        // Vordefinierte Stundenbilder für das erste Laden
-        const initialStundenbilder = [
-            { id: 1, date: "17. Sep 2025", shortTitle: "Einheit 1", title: "Stundenbild 1: Ankommen & Kennenlernen", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div><h4 class="font-bold">Von zu Hause:</h4><ul class="list-disc list-inside"><li>Musikanlage / Bluetooth-Box</li><li>Luftballons (Gr. 1) / leichte Bälle (Gr. 2)</li><li>Optional: Werwolf-Karten (Gr. 2)</li></ul></div>
-                <div><h4 class="font-bold">Aus dem Turnsaal:</h4><ul class="list-disc list-inside"><li>Taue, 2 Turnkästen, 2 Langbänke</li><li>1 Weichbodenmatte & Turnmatten</li><li>Sprossenwand, 2 Paar Ringe, 2 Gitterleitern</li></ul></div>
-            </div>
-            <hr class="my-4">
-            <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
-            <div class="space-y-6">
-                <!-- Hopsi Hopper -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo und spielen Feuer-Wasser-Sturm.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen an 5 Stationen: Tauschaukel, Sprungberg (Kasten+Weichboden), Kletterparcours (Sprossenwand+Bank+Kasten), Ringestation, Kletterwand (Gitterleitern).</li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Wir spielen "Wer fürchtet sich vor dem weißen Hai?". Danach "Packerl machen" und "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Winken mit Händen und Füßen.</li>
-                    </ul>
-                </div>
-                <!-- KOORDI -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po. Wir spielen Feuer-Wasser-Sturm.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen an 5 Stationen: Tauschaukel, Sprungberg (Kasten+Weichboden), Kletterparcours (Sprossenwand+Bank+Kasten), Ringestation, Kletterwand (Gitterleitern).</li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Wir spielen "Die Chinesische Mauer" und danach "Der Hase läuft über das Feld". Zum Abschluss "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> "Winken mit Händen und Füßen", danach kurzer Austausch.</li>
-                    </ul>
-                </div>
-            </div>`, notes: "" },
-            { id: 2, date: "24. Sep 2025", shortTitle: "Einheit 2", title: "Stundenbild 2: Ausdauer-Würfelspiel", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="font-bold">Von zu Hause:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>5 aufblasbare Bälle</li>
-                        <li>Würfel, Stifte</li>
-                        <li>Markierhütchen um den inneren Kreis zu markieren</li>
-                        <li>Bewegungschips</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold">Aus dem Turnsaal:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>2x Kasten</li>
-                        <li>4x Langbank</li>
-                        <li>Weichboden</li>
-                        <li>4x Turnmatten</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <h4 class="font-bold text-gray-800">Parcours-Aufbau</h4>
-                <p class="mt-2">Der Parcours besteht aus folgenden Elementen, die in der Halle aufgebaut werden:</p>
-                <ul class="list-disc list-inside mt-2">
-                    <li>Über eine Langbank auf den Kasten 1</li>
-                    <li>Über eine zweite Langbank (als Brücke) zum Kasten 2</li>
-                    <li>Sprung auf den Weichboden</li>
-                    <li>Über eine gedrehte Langbank weiter</li>
-                    <li>Eine Rolle vorwärts auf zwei Turnmatten</li>
-                    <li>Durch drei Reifen zurück hüpfen</li>
-                </ul>
-            </div>
-            <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
-            <div class="space-y-6">
-                <!-- Hopsi Hopper -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo und spielen Feuer-Wasser-Sturm.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Die Kinder werden in 2er- oder 3er-Gruppen eingeteilt. Jede Gruppe würfelt. Bei einer ungeraden Zahl läuft die Gruppe um die Markierhütchen. Bei einer geraden Zahl durchläuft die Gruppe den Parcours. Die Eltern unterstützen beim Ausstreichen der Zahlen auf dem Zahlenblatt. Die schnellste Gruppe, die alle Zahlen ausgestrichen hat, gewinnt.</li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Staffellauf mit Bällen. Optional: "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Atemübung, dann Winken mit Händen und Füßen.</li>
-                    </ul>
-                </div>
-                <!-- KOORDI -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Zur Musik: Begrüßung der Kinder, zuerst mit rechter Hand, dann mit rechtem Fuß, danach mit der Hüfte und schließlich mit Po an Po.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir tanzen den Kolo und spielen Feuer-Wasser-Sturm.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Die Kinder werden in 2er- oder 3er-Gruppen eingeteilt. Jede Gruppe würfelt. Bei einer ungeraden Zahl läuft die Gruppe um die Markierhütchen. Bei einer geraden Zahl durchläuft die Gruppe den Parcours. Die schnellste Gruppe, die alle Zahlen ausgestrichen hat, gewinnt.</li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Staffellauf mit Bällen. Optional: "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Atemübung, dann Winken mit Händen und Füßen.</li>
-                    </ul>
-                </div>
-            </div>`, notes: "" },
-            { id: 3, date: "01. Okt 2025", shortTitle: "Einheit 3", title: "Stundenbild 3: Großer Gerätepark", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="font-bold">Von zu Hause:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>Musikanlage / Bluetooth-Box</li>
-                        <li>Rote Schleifen (für "Versteinern")</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold">Aus dem Turnsaal:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>20 Turnreifen</li>
-                        <li>Taue, Leichtmatten, Sprossenwand, Rutsche</li>
-                        <li>Gitterleitern, 1 Langbank, 1 Kasten</li>
-                        <li>2 Weichbodenmatten, 1 Trampolin</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <h4 class="font-bold text-gray-800">Parcours-Aufbau Stationsbetrieb</h4>
-                <p class="mt-2">Die Stationen werden vor der Stunde aufgebaut:</p>
-                <ul class="list-decimal list-inside mt-2 space-y-2">
-                    <li><b>Station 1: Taue mit 4 Langbänken</b>
-                        <ul class="list-[circle] list-inside ml-4">
-                            <li>Wir schwingen von einer Seite auf die andere.</li>
-                        </ul>
-                    </li>
-                    <li><b>Station 2: Turnringe</b>
-                        <ul class="list-[circle] list-inside ml-4">
-                            <li><b>HOPSI:</b> Schwingen, Stützen, Reinsetzen und schaukeln.</li>
-                            <li><b>KOORDI:</b> In den Stütz und halten, Fenstersturz mit Unterstützung, in die Ringe und schaukeln.</li>
-                        </ul>
-                    </li>
-                    <li><b>Station 3: Trampolin und Weichboden</b>
-                        <ul class="list-[circle] list-inside ml-4">
-                            <li>Freie Sprünge auf dem Trampolin mit Landung auf dem Weichboden.</li>
-                        </ul>
-                    </li>
-                    <li><b>Station 4: Rutsche an der Sprossenwand</b>
-                        <ul class="list-[circle] list-inside ml-4">
-                            <li>Die Rutsche wird mit Turnmatten gesichert.</li>
-                        </ul>
-                    </li>
-                    <li><b>Station 5: Rack mit 2 Langbänken</b>
-                        <ul class="list-[circle] list-inside ml-4">
-                            <li><b>HOPSI:</b> Klettern und drüber springen.</li>
-                            <li><b>KOORDI:</b> In den Stütz springen, Aufschwung üben.</li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-            <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
-            <div class="space-y-6">
-                <!-- Hopsi Hopper -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> "Feuer-Wasser-Sturm", danach Körperteil-Begrüßung.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir stellen uns in 3 Gruppen auf, jede Gruppe hat einen Reifen vor sich liegen. Wir absolvieren folgende Übungen:
-                            <ul class="list-[circle] list-inside mt-2">
-                                <li>Wir gehen über die Reifen</li>
-                                <li>Wir laufen über die Reifen</li>
-                                <li>Wir gehen rückwärts über die Reifen</li>
-                                <li>Wir laufen rückwärts über die Reifen</li>
-                                <li>Wir springen mit beiden Beinen in jeden Reifen vorwärts</li>
-                                <li>Wir balancieren über die Reifen</li>
-                                <li>Wir springen in den Reifen und klatschen dabei</li>
-                                <li>Wir gehen durch den Riefen, dabei wird der ganze Körper durch den Reifen geschoben</li>
-                            </ul>
-                        </li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen am Stationsbetrieb. Die Eltern unterstützen bei den Stationen.</li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b>
-                            <ul class="list-[circle] list-inside mt-2">
-                                <li>Liegestützübungen</li>
-                                <li>Handstandübungen an der Wand</li>
-                                <li>Scheibtruhe fahren (paarweise)</li>
-                            </ul>
-                        </li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> "Tunnel", danach Winken.</li>
-                    </ul>
-                </div>
-                <!-- KOORDI -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> "Feuer-Wasser-Sturm", danach Körperteil-Begrüßung.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir stellen uns in 3 Gruppen auf, jede Gruppe hat einen Reifen vor sich liegen. Wir absolvieren folgende Übungen:
-                            <ul class="list-[circle] list-inside mt-2">
-                                <li>Wir gehen über die Reifen</li>
-                                <li>Wir laufen über die Reifen</li>
-                                <li>Wir gehen rückwärts über die Reifen</li>
-                                <li>Wir laufen rückwärts über die Reifen</li>
-                                <li>Wir springen mit beiden Beinen in jeden Reifen vorwärts</li>
-                                <li>Wir balancieren über die Reifen</li>
-                                <li>Wir springen in den Reifen und klatschen dabei</li>
-                                <li>Wir gehen durch den Riefen, dabei wird der ganze Körper durch den Reifen geschoben</li>
-                            </ul>
-                        </li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b> Freies Turnen am Stationsbetrieb.</li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b>
-                            <ul class="list-[circle] list-inside mt-2">
-                                <li>Liegestützübungen</li>
-                                <li>Handstandübungen an der Wand</li>
-                                <li>Scheibtruhe fahren (paarweise)</li>
-                            </ul>
-                        </li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> "Tunnel", danach Winken.</li>
-                    </ul>
-                </div>
-            </div>`, notes: "" },
-            { id: 4, date: "08. Okt 2025", shortTitle: "Einheit 4", title: "Stundenbild 4: Fangen und Werfen", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="font-bold">Von zu Hause:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>Aufblasbare Bälle</li>
-                        <li>Markierungshütchen</li>
-                        <li>Schleifen</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold">Aus dem Turnsaal:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>6x Langbänke</li>
-                        <li>1x Kasten (für das Zielwerfen)</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
-            <div class="space-y-6">
-                <!-- Hopsi Hopper -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Wir begrüßen uns wie bei Einheit 1.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> 5 Minuten Aufwärmen mit mir, alle Gliedmaßen dehnen (wie in der Kletterhalle). Danach Aufwärmen mit dem Ball.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
-                            <ul class="list-[circle] list-inside mt-2 space-y-2">
-                                <li><b>"Ball-Fisch-Fangen":</b> Ein Fang-Spiel, bei dem Kinder, die vom Ball getroffen werden, breitbeinig stehen bleiben, bis sie befreit werden.</li>
-                                <li><b>"Hütchen-Zielwerfen":</b> Aufgestellte Hütchen mit weichen Bällen abwerfen.</li>
-                                <li><b>"Eltern-Kind-Rollball":</b> Die Kinder rollen sich im Sitzen den Ball zu, um die Hand-Auge-Koordination zu fördern.</li>
-                                <li><b>"Ball-Klettern":</b> Über eine Langbank klettern, ohne die darauf liegenden Bälle herunterzuwerfen.</li>
-                                <li><b>"Der fliegende Ball":</b> Ball hochwerfen, fangen und dabei eine kleine Übung machen.</li>
-                            </ul>
-                        </li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
-                    </ul>
-                </div>
-                <!-- KOORDI -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> Begrüßung und kurze Besprechung der heutigen Stunde.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Wir begrüßen uns wie bei Einheit 1.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> 5 Minuten Aufwärmen mit mir, alle Gliedmaßen dehnen (wie in der Kletterhalle). Danach Aufwärmen mit dem Ball.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
-                            <ul class="list-[circle] list-inside mt-2 space-y-2">
-                                <li><b>"Mannschafts-Wandball":</b> Teams werfen den Ball an eine Wand, der von einem Teamkollegen gefangen werden muss.</li>
-                                <li><b>"Dribbel-Parcours":</b> Parcours mit Langbänken, den die Kinder dribbelnd durchlaufen müssen.</li>
-                                <li><b>"Merkball":</b> Im Kreis stehen und sich den Ball zuwerfen, dabei den Namen des Empfängers rufen.</li>
-                                <li><b>"Ball-Völkerball":</b> Eine vereinfachte Version von Völkerball.</li>
-                                <li><b>"Staffellauf mit Zielwerfen":</b> Staffellauf, bei dem am Ende eines jeden Durchgangs ein Ball in einen Kasten geworfen werden muss.</li>
-                            </ul>
-                        </li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Ruhige Ballspiele im Kreis: "Der rollende Kreis", "Die Ball-Geschichte". Danach "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> "Freundschafts-Klatscher" im Kreis, danach Winken.</li>
-                    </ul>
-                </div>
-            </div>`, notes: "" },
-            { id: 5, date: "15. Okt 2025", shortTitle: "Einheit 5", title: "Einheit 5", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="font-bold">Von zu Hause:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>Musikanlage / Bluetooth-Box</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold">Aus dem Turnsaal:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>Langbänke, Turnmatten, Sprossenwand, Kasten</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
-            <div class="space-y-6">
-                <!-- Hopsi Hopper -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Die Kinder laufen zur Musik. Bei einer gerufenen Zahl zwischen 2 und 6 bilden die Kinder eine Gruppe. Übrig gebliebene Kinder machen mit dem Trainer eine Gruppe und absolvieren folgende Übungen:
-                            <ul class="list-[circle] list-inside mt-2">
-                                <li>Hampelmann</li>
-                                <li>Sprung und im Sprung</li>
-                                <li>Ein Kind liegt am Boden und die Anderen springen vorsichtig über das Kind</li>
-                            </ul>
-                        </li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir wärmen uns wie in der Kletterhalle auf und spielen Versteinern.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
-                            <p class="mt-2">Es geht um Ausdauertraining.</p>
-                            <ul class="list-[circle] list-inside mt-2 space-y-2">
-                                <li><b>Langbänke:</b> Über die Langbank gehen (ein Fuß muss darauf), unter der Langbank durchkriechen, rückwärts laufen und über die Langbank springen.</li>
-                                <li><b>Langbänke (umgebaut):</b> Die Kinder legen sich mit dem Bauch auf die Langbank und ziehen sich rüber.</li>
-                                <li><b>Sprossenwand:</b> Klettern von einem Ende zum anderen. Knien und mit den Füßen auf die Sprossenwand klettern. Mit dem Rücken vor die Sprossenwand legen und Sprosse für Sprosse hochklettern.</li>
-                                <li><b>Wand:</b> Auf Turnmatten knien und mit beiden Füßen kurz gegen die Wand springen. Danach versuchen, immer mehr einen Handstand zu schaffen.</li>
-                                <li><b>Ausdauer-Staffel:</b> In drei Gruppen vor der Wand laufen und eine Übung machen (Wand mit Po berühren, hochspringen und Wand berühren, gegen die Wand knien und springen).</li>
-                            </ul>
-                        </li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Drei Gruppen auf Langbänken. Der Trainer ruft Zahlen auf, und die entsprechenden Kinder führen die Übungen aus: Aufstehen, um die Langbank laufen, Platz wechseln. Wir spielen "Der Hase läuft über das Feld". Danach "Packerl machen" und "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Wie in Einheit 1.</li>
-                    </ul>
-                </div>
-                <!-- KOORDI -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> "Ich bin kleiner Bär"-Spruch im Kreis.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> Die Kinder laufen zur Musik. Bei einer gerufenen Zahl zwischen 2 und 6 bilden die Kinder eine Gruppe. Übrig gebliebene Kinder machen mit dem Trainer eine Gruppe und absolvieren folgende Übungen:
-                            <ul class="list-[circle] list-inside mt-2">
-                                <li>Hampelmann</li>
-                                <li>Sprung und im Sprung</li>
-                                <li>Ein Kind liegt am Boden und die Anderen springen vorsichtig über das Kind</li>
-                            </ul>
-                        </li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> Wir wärmen uns wie in der Kletterhalle auf und spielen Versteinern.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
-                            <p class="mt-2">Es geht um Ausdauertraining.</p>
-                            <ul class="list-[circle] list-inside mt-2 space-y-2">
-                                <li><b>Langbänke:</b> Über die Langbank gehen (ein Fuß muss darauf), unter der Langbank durchkriechen, rückwärts laufen und über die Langbank springen.</li>
-                                <li><b>Langbänke (umgebaut):</b> Die Kinder legen sich mit dem Bauch auf die Langbank und ziehen sich rüber.</li>
-                                <li><b>Sprossenwand:</b> Klettern von einem Ende zum anderen. Knien und mit den Füßen auf die Sprossenwand klettern. Mit dem Rücken vor die Sprossenwand legen und Sprosse für Sprosse hochklettern.</li>
-                                <li><b>Wand:</b> Auf Turnmatten knien und mit beiden Füßen kurz gegen die Wand springen. Danach versuchen, immer mehr einen Handstand zu schaffen.</li>
-                                <li><b>Ausdauer-Staffel:</b> In drei Gruppen vor der Wand laufen und eine Übung machen (Wand mit Po berühren, hochspringen und Wand berühren, gegen die Wand knien und springen).</li>
-                            </ul>
-                        </li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> Drei Gruppen auf Langbänken. Der Trainer ruft Zahlen auf, und die entsprechenden Kinder führen die Übungen aus: Aufstehen, um die Langbank laufen, Platz wechseln. Danach "Pizza backen" und "Werwolf".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Wie in Einheit 1.</li>
-                    </ul>
-                </div>
-            </div>`, notes: "" },
-            { id: 6, date: "22. Okt 2025", shortTitle: "Halloween", title: "Sonderthema: Halloween-Turnstunde", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Material & Geräte</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="font-bold">Von zu Hause:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>Musik passend zum Thema</li>
-                        <li>Dekoration (Spinnen, Fledermäuse, etc.)</li>
-                        <li>Leichte Stofftücher (für Geisterspiele)</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold">Aus dem Turnsaal:</h4>
-                    <ul class="list-disc list-inside">
-                        <li>Kleine Bälle (als "Augäpfel")</li>
-                        <li>Fallschirm</li>
-                        <li>Reifen und Hütchen (für Parcours)</li>
-                        <li>Turnmatten</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3>
-            <div class="space-y-6">
-                <!-- Hopsi Hopper -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">HOPSI HOPPER (3-6 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> Die Kinder sitzen im "Hexenkessel" (Kreis) und begrüßen sich mit einem gruseligen "Huhuuu"-Flüstern. Es wird kurz über die Kostüme gesprochen.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> "Spinnweben-Lauf" durch einen Parcours aus Seilen, die nicht berührt werden dürfen. Wer berührt, muss laut "Buhh!" rufen.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> "Monster-Gang": Jeder bewegt sich wie ein Monster oder Geist zu gruseliger Musik. Danach ein "Zombie-Lauf" durch die Halle.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
-                            <ul class="list-[circle] list-inside mt-2 space-y-2">
-                                <li><b>"Kürbis-Jagd":</b> Ein Fangspiel, bei dem der Fänger einen orangefarbenen Ball (Kürbis) in den Händen hält.</li>
-                                <li><b>"Gespenster-Tuch-Flug":</b> Kleine Stofftücher (Geister) werden hoch in die Luft geworfen und müssen gefangen werden, bevor sie zu Boden fallen.</li>
-                                <li><b>"Monster-Parcours":</b> Ein Parcours aus Matten und Kästen, der nur auf allen Vieren (wie ein Monster) oder rückwärts durchlaufen werden darf.</li>
-                            </ul>
-                        </li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> "Fliegende Geister": Die Kinder sitzen im Kreis und werfen gemeinsam ein großes Tuch (Fallschirm) in die Luft. Danach "Pizza backen".</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Jeder verabschiedet sich mit einem "Gruselgeräusch".</li>
-                    </ul>
-                </div>
-                <!-- KOORDI -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-800">KOORDI (6-10 Jahre)</h4>
-                    <ul class="list-decimal list-inside space-y-2 mt-2">
-                        <li><b>Start Ritual (ca. 3 Min):</b> Alle sitzen im "Hexenkessel" (Kreis) und begrüßen sich mit einem unheimlichen "Huhuuu". Danach kurze Besprechung der "gruseligen" Regeln.</li>
-                        <li><b>Einstiegsphase (ca. 5 Min):</b> "Spinnennetz-Wettlauf": Zwei Teams rennen gegeneinander durch einen Parcours aus Seilen. Berühren sie ein Seil, müssen sie sich einmal um die eigene Achse drehen.</li>
-                        <li><b>Aufwärmphase (ca. 10-15 Min):</b> "Monster-Gang": Jeder bewegt sich wie ein gruseliges Wesen zu lauter Musik. Danach ein "Zombie-Lauf" mit ausgestreckten Armen, um die Koordination zu trainieren.</li>
-                        <li><b>Zielerreichungsphase (ca. 25-30 Min):</b>
-                            <ul class="list-[circle] list-inside mt-2 space-y-2">
-                                <li><b>"Augen-Wurf":</b> Die Kinder versuchen, kleine Bälle ("Augäpfel") in einen weit entfernten Kasten zu werfen.</li>
-                                <li><b>"Skelett-Bausteine":</b> In Gruppen versuchen die Kinder, aus Turnmatten und Kisten ein "Skelett" (eine menschliche Form) nachzubilden.</li>
-                                <li><b>"Gespenster-Jagd":</b> Ein Kind ist das "Gespenst" und fängt die anderen. Die gefangenen Kinder sind "versteinerte Geister" und müssen stillstehen. Sie können befreit werden, indem sie ein anderes Kind berührt.</li>
-                            </ul>
-                        </li>
-                        <li><b>Ausklangsphase (ca. 10 Min):</b> "Geister-Flug": Alle Kinder sitzen am Boden und halten einen Fallschirm. Sie lassen ihn gemeinsam auf- und abfliegen, um die Stunde langsam ausklingen zu lassen.</li>
-                        <li><b>Schlussritual (ca. 3 Min):</b> Jedes Kind verabschiedet sich mit einem "Gruselgeräusch" von den anderen.</li>
-                    </ul>
-                </div>
-            </div>`, notes: "" },
-            { id: 7, date: "05. Nov 2025", shortTitle: "Einheit 7", title: "Einheit 7", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>`, notes: "" },
-            { id: 8, date: "12. Nov 2025", shortTitle: "Einheit 8", title: "Einheit 8", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>`, notes: "" },
-            { id: 9, date: "19. Nov 2025", shortTitle: "Einheit 9", title: "Einheit 9", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>`, notes: "" },
-            { id: 10, date: "26. Nov 2025", shortTitle: "Einheit 10", title: "Einheit 10", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>`, notes: "" },
-            { id: 11, date: "03. Dez 2025", shortTitle: "Einheit 11", title: "Einheit 11", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>`, notes: "" },
-            { id: 12, date: "10. Dez 2025", shortTitle: "Einheit 12", title: "Einheit 12", content: `<h3 class="text-xl font-semibold mb-3 text-red-700">Ablauf der Turnstunde</h3><ol class="list-decimal list-inside space-y-3"><li><b>Start Ritual (ca. 3 Min):</b> [Beschreibung]</li><li><b>Einstiegsphase (ca. 5 Min):</b> [Beschreibung]</li><li><b>Aufwärmphase (ca. 10-15 Min):</b> [Beschreibung]</li><li><b>Zielerreichungsphase (ca. 25-30 Min):</b> [Beschreibung]</li><li><b>Ausklangsphase (ca. 10 Min):</b> [Beschreibung]</li><li><b>Schlussritual (ca. 3 Min):</b> [Beschreibung]</li></ol>`, notes: "" },
-        ];
-
-        // Authentifizierung und Laden der Daten
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                userIdDisplay.textContent = userId;
-                await loadStundenbilder();
-            } else {
-                loadingSpinner.classList.remove('hidden');
-                try {
-                    // Versuche, mit dem Custom Token anzumelden
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } catch (error) {
-                    // Bei Misserfolg, versuche anonyme Anmeldung als Fallback
-                    await signInAnonymously(auth);
+            function renderUI() {
+                if (stundenbilder.length === 0) {
+                     tabsContent.innerHTML = `<p class="text-center py-8 text-gray-500">Keine Stundenbilder gefunden.</p>`;
+                     return;
                 }
-            }
-        });
-
-        async function loadStundenbilder() {
-            const stundenbilderRef = collection(db, `artifacts/${appId}/users/${userId}/stundenbilder`);
-            
-            // Überprüfe, ob die Sammlung leer ist
-            const snapshot = await getDocs(stundenbilderRef);
-            if (snapshot.empty) {
-                console.log("Datenbank ist leer. Initialisiere mit vordefinierten Daten.");
-                for (const stunde of initialStundenbilder) {
-                    await setDoc(doc(db, `artifacts/${appId}/users/${userId}/stundenbilder`, String(stunde.id)), stunde);
-                }
-            }
-            
-            // Setze den Echtzeit-Listener
-            const q = query(stundenbilderRef, orderBy("id"));
-            onSnapshot(q, (querySnapshot) => {
-                stundenbilder = [];
-                querySnapshot.forEach((doc) => {
-                    stundenbilder.push(doc.data());
-                });
-                renderUI();
-                loadingSpinner.classList.add('hidden');
-            }, (error) => {
-                console.error("Fehler beim Abrufen der Stundenbilder:", error);
-                loadingSpinner.innerHTML = `<p class="text-center text-red-500 mt-2">Fehler beim Laden der Daten.</p>`;
-            });
-        }
-
-        function renderUI() {
-            if (stundenbilder.length === 0) {
-                 tabsContent.innerHTML = `<p class="text-center py-8 text-gray-500">Keine Stundenbilder gefunden. Bitte lade die Seite neu, um die Standarddaten zu laden.</p>`;
-                 return;
-            }
-            // Sortiere nach ID
-            stundenbilder.sort((a, b) => a.id - b.id);
-            
-            // Leere das Menü und den Inhalt
-            menuNav.innerHTML = '';
-            tabsContent.innerHTML = '';
-
-            // Fülle das Menü und den Inhalt neu
-            stundenbilder.forEach(stunde => {
-                // Erstelle Menü-Link
-                const link = document.createElement('a');
-                link.href = '#';
-                link.dataset.target = `tab-${stunde.id}`;
-                const isSpecial = stunde.shortTitle.toLowerCase().includes('halloween') || stunde.shortTitle.toLowerCase().includes('herbstferien');
-                link.className = `block px-4 py-2 rounded-md text-sm font-medium ${isSpecial ? 'text-orange-600 hover:bg-orange-50' : 'text-gray-700 hover:bg-gray-100'}`;
-                link.innerHTML = `<span class="font-bold">${stunde.shortTitle}</span> - ${stunde.date}`;
-                menuNav.appendChild(link);
+                // Sortiere nach ID
+                stundenbilder.sort((a, b) => a.id - b.id);
                 
-                // Erstelle Inhalts-Panel
-                const contentPanel = document.createElement('div');
-                contentPanel.id = `tab-${stunde.id}`;
-                contentPanel.className = 'tab-content';
-                contentPanel.style.display = 'none';
-                contentPanel.innerHTML = `
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">${stunde.title}</h2>
-                    ${stunde.content}
-                    <hr class="my-6 border-gray-200">
-                    <div class="bg-blue-50 p-4 rounded-lg">
-                        <h3 class="text-xl font-semibold mb-3 text-blue-800">Notizen & Reflexion</h3>
-                        <textarea id="notes-${stunde.id}" class="w-full h-32 p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Was lief gut? Was kann verbessert werden?">${stunde.notes || ''}</textarea>
-                        <p class="text-xs text-gray-500 mt-1">Deine Notizen werden automatisch in der Cloud gespeichert.</p>
-                    </div>`;
-                tabsContent.appendChild(contentPanel);
+                // Leere das Menü und den Inhalt
+                menuNav.innerHTML = '';
+                tabsContent.innerHTML = '';
 
-                // Füge Event-Listener für Notizen hinzu
-                const textarea = contentPanel.querySelector(`#notes-${stunde.id}`);
-                if (textarea) {
-                    textarea.addEventListener('input', async () => {
-                        const lessonDocRef = doc(db, `artifacts/${appId}/users/${userId}/stundenbilder`, String(stunde.id));
-                        await setDoc(lessonDocRef, { notes: textarea.value }, { merge: true });
-                    });
-                }
-            });
+                // Fülle das Menü und den Inhalt neu
+                stundenbilder.forEach(stunde => {
+                    // Erstelle Menü-Link
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.dataset.target = `tab-${stunde.id}`;
+                    const isSpecial = stunde.shortTitle.toLowerCase().includes('halloween') || stunde.shortTitle.toLowerCase().includes('herbstferien');
+                    link.className = `block px-4 py-2 rounded-md text-sm font-medium ${isSpecial ? 'text-orange-600 hover:bg-orange-50' : 'text-gray-700 hover:bg-gray-100'}`;
+                    link.innerHTML = `<span class="font-bold">${stunde.shortTitle}</span> - ${stunde.date}`;
+                    menuNav.appendChild(link);
+                    
+                    // Erstelle Inhalts-Panel
+                    const contentPanel = document.createElement('div');
+                    contentPanel.id = `tab-${stunde.id}`;
+                    contentPanel.className = 'tab-content';
+                    contentPanel.style.display = 'none';
+                    contentPanel.innerHTML = `
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">${stunde.title}</h2>
+                        ${stunde.content}
+                        `;
+                    tabsContent.appendChild(contentPanel);
+                });
 
-            // Zeige die aktuelle Einheit an
-            const activeStundeIndex = findCurrentStundeIndex();
-            const initialStundeId = stundenbilder[activeStundeIndex].id;
-            showStunde(initialStundeId);
+                // Zeige die aktuelle Einheit an
+                const activeStundeIndex = findCurrentStundeIndex();
+                const initialStundeId = stundenbilder[activeStundeIndex].id;
+                showStunde(initialStundeId);
 
-            // Füge Event-Listener für Menü-Links hinzu
-            menuNav.addEventListener('click', (e) => {
-                e.preventDefault();
-                const link = e.target.closest('a');
-                if (link) {
-                    const targetId = link.dataset.target.slice(4);
-                    showStunde(targetId);
-                    toggleMenu(); // Menü nach Auswahl schließen
-                }
-            });
-        }
-
-        // Hilfsfunktionen
-        function parseDate(germanDateStr) {
-            const months = { 'Jan': 0, 'Feb': 1, 'Mär': 2, 'Apr': 3, 'Mai': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Dez': 11 };
-            const parts = germanDateStr.split(' ');
-            const day = parseInt(parts[0], 10);
-            const month = months[parts[1]];
-            const year = parseInt(parts[2], 10);
-            return new Date(year, month, day);
-        }
-
-        function findCurrentStundeIndex() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            let activeIndex = 0;
-            if (stundenbilder.length === 0) return 0;
-            for (let i = 0; i < stundenbilder.length; i++) {
-                const stundeDate = parseDate(stundenbilder[i].date);
-                const nextStundeDate = (i + 1 < stundenbilder.length) ? parseDate(stundenbilder[i+1].date) : new Date(stundeDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-                if (today >= stundeDate && today < nextStundeDate) {
-                    activeIndex = i; break;
-                }
-                if (today >= stundeDate) { activeIndex = i; }
+                // Füge Event-Listener für Menü-Links hinzu
+                menuNav.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const link = e.target.closest('a');
+                    if (link) {
+                        const targetId = link.dataset.target.slice(4);
+                        showStunde(targetId);
+                        toggleMenu(); // Menü nach Auswahl schließen
+                    }
+                });
             }
-            return activeIndex;
-        }
 
-        function showStunde(id) {
-            // Verstecke alle Panels
-            tabsContent.querySelectorAll('.tab-content').forEach(panel => panel.style.display = 'none');
-            
-            // Zeige das ausgewählte Panel
-            const contentPanel = document.getElementById(`tab-${id}`);
-            if (contentPanel) {
-                contentPanel.style.display = 'block';
-                activeStundeId = id;
-                const stundeData = stundenbilder.find(s => s.id == id);
-                if(stundeData) {
-                    currentLessonTitle.textContent = stundeData.title;
-                }
+            // Hilfsfunktionen
+            function parseDate(germanDateStr) {
+                const months = { 'Jan': 0, 'Feb': 1, 'Mär': 2, 'Apr': 3, 'Mai': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Dez': 11 };
+                const parts = germanDateStr.split(' ');
+                const day = parseInt(parts[0], 10);
+                const month = months[parts[1]];
+                const year = parseInt(parts[2], 10);
+                return new Date(year, month, day);
             }
-            // Aktualisiere den aktiven Zustand im Menü
-            menuNav.querySelectorAll('a').forEach(link => {
-                if (link.dataset.target.slice(4) == id) {
-                    link.classList.add('bg-red-100', 'text-red-700');
-                } else {
-                    link.classList.remove('bg-red-100', 'text-red-700');
+
+            function findCurrentStundeIndex() {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                let activeIndex = 0;
+                if (stundenbilder.length === 0) return 0;
+                for (let i = 0; i < stundenbilder.length; i++) {
+                    const stundeDate = parseDate(stundenbilder[i].date);
+                    const nextStundeDate = (i + 1 < stundenbilder.length) ? parseDate(stundenbilder[i+1].date) : new Date(stundeDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    if (today >= stundeDate && today < nextStundeDate) {
+                        activeIndex = i; break;
+                    }
+                    if (today >= stundeDate) { activeIndex = i; }
                 }
+                return activeIndex;
+            }
+
+            function showStunde(id) {
+                // Verstecke alle Panels
+                tabsContent.querySelectorAll('.tab-content').forEach(panel => panel.style.display = 'none');
+                
+                // Zeige das ausgewählte Panel
+                const contentPanel = document.getElementById(`tab-${id}`);
+                if (contentPanel) {
+                    contentPanel.style.display = 'block';
+                    activeStundeId = id;
+                    const stundeData = stundenbilder.find(s => s.id == id);
+                    if(stundeData) {
+                        currentLessonTitle.textContent = stundeData.title;
+                    }
+                }
+                // Aktualisiere den aktiven Zustand im Menü
+                menuNav.querySelectorAll('a').forEach(link => {
+                    if (link.dataset.target.slice(4) == id) {
+                        link.classList.add('bg-red-100', 'text-red-700');
+                    } else {
+                        link.classList.remove('bg-red-100', 'text-red-700');
+                    }
+                });
+            }
+
+            // Menü-Logik
+            const toggleMenu = () => {
+                mobileMenu.classList.toggle('-translate-x-full');
+                menuOverlay.classList.toggle('hidden');
+            };
+
+            // Initiale UI-Darstellung
+            renderUI();
+
+            // Event-Listener
+            menuToggle.addEventListener('click', toggleMenu);
+            menuOverlay.addEventListener('click', toggleMenu);
+            printButton.addEventListener('click', () => {
+                window.print();
             });
-        }
-
-        // Menü-Logik
-        const toggleMenu = () => {
-            mobileMenu.classList.toggle('-translate-x-full');
-            menuOverlay.classList.toggle('hidden');
-        };
-
-        menuToggle.addEventListener('click', toggleMenu);
-        menuOverlay.addEventListener('click', toggleMenu);
-
-        // Druckfunktion
-        printButton.addEventListener('click', () => {
-            window.print();
         });
     </script>
 </body>
 </html>
+
