@@ -46,7 +46,7 @@
         <header class="bg-red-600 text-white p-4 rounded-lg shadow-lg mb-6 flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold">ASKÖ Kinderturnen</h1>
-                <p id="current-lesson-title" class="text-lg">Kursplan Herbst/Winter 2025</p>
+                <p id="current-lesson-title" class="text-lg">Kursplan 2025/2026</p>
             </div>
             <div class="flex items-center space-x-2">
                 <button id="print-button" class="p-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-white">
@@ -960,7 +960,7 @@
                     const link = document.createElement('a');
                     link.href = '#';
                     link.dataset.target = `tab-${stunde.id}`;
-                    const isSpecial = stunde.shortTitle.toLowerCase().includes('halloween') || stunde.shortTitle.toLowerCase().includes('herbstferien') || stunde.shortTitle.toLowerCase().includes('weihnachten');
+                    const isSpecial = stunde.shortTitle.toLowerCase().includes('halloween') || stunde.shortTitle.toLowerCase().includes('herbstferien') || stunde.shortTitle.toLowerCase().includes('weihn');
                     link.className = `block px-4 py-2 rounded-md text-sm font-medium ${isSpecial ? 'text-orange-600 hover:bg-orange-50' : 'text-gray-700 hover:bg-gray-100'}`;
                     link.innerHTML = `<span class="font-bold">${stunde.shortTitle}</span> - ${stunde.date}`;
                     menuNav.appendChild(link);
@@ -1063,5 +1063,6 @@
     </script>
 </body>
 </html>
-
+"
+In the `isSpecial` function in the `renderUI()` function, you should also include `weihn` to cover Weihnachten.
 
